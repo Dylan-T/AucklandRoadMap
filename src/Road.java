@@ -13,7 +13,7 @@ public class Road {
 	private int type;
 	private String label;
 	private String city;
-	private boolean oneWay;
+	boolean oneWay;
 	private int speed;
 	private int roadClass;
 	private boolean cars;

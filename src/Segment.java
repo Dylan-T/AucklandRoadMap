@@ -1,7 +1,6 @@
 import java.awt.Graphics;
 import java.awt.Point;
 import java.util.List;
-import java.util.Set;
 /**
  * This class creates a segment of a road between two Nodes
  * @author Dylan

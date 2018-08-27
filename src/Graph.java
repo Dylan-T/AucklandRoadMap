@@ -14,6 +14,7 @@ public class Graph {
 	Set<Segment> segList = new HashSet<Segment>();
 	Map<Integer, Road> roadMap = new HashMap<Integer, Road>();
 	TrieNode searchTrie = new TrieNode();
+	Set<Node> APs = new HashSet<Node>();
 	
 	public Graph(File nodes, File segs, File roads){
 		try {
@@ -63,7 +64,10 @@ public class Graph {
 				fromNode.addSeg(tempSeg);
 				toNode.addSeg(tempSeg);
 			}
-			
+			for(Node n: getNodes()) {
+				if(n.count == Integer.MAX_VALUE)getArticulationPoints(n);
+			}
+			System.out.println(APs.size());
 			bNode.close();
 			bRoad.close();
 			bSeg.close();
@@ -174,15 +178,16 @@ public class Graph {
 			}
 			
 			
-			for(Segment s: current.node.getSegs()) {
-				Node cNode;
-				if(s.getTo() == current.node) cNode = s.getFrom();
-				else cNode = s.getTo();
-				if(!visited.contains(cNode) ) {
-					SearchElement child = new SearchElement(cNode, current, s, goal);
-					fringe.add(child);
+			for(Segment s: current.node.getSegs()) {//Finding all neighbours
+				if(!(s.getRoad().oneWay && s.getTo() == current.node)) { //Check for oneway
+					Node cNode;
+					if(s.getTo() == current.node && !s.getRoad().oneWay) cNode = s.getFrom();
+					else cNode = s.getTo();
+					if(!visited.contains(cNode) ) {
+						SearchElement child = new SearchElement(cNode, current, s, goal);
+						fringe.add(child);
+					}
 				}
-				
 			}
 		}
 		List<Segment> path = new ArrayList<Segment>();
@@ -243,38 +248,54 @@ public class Graph {
 		}
 	}
 
-	public List<Node> getArticulationPoints() {
-//		* [10] Finds articulation points in one part of the graph.
-//		* [5] Uses the correct graph structure, i.e. ignores one way. (Articulation points should use an undirected graph.)
-//		* [5] Displays the selected nodes. (i.e. displays art pts)
-//		* [5] Finds articulation points in all components of the graph.
-//		* [5] Uses the iterative version of the algorithm
-//		* [5] Do they have a report with pseudocode of their algorithms in it?
-		List<Node> aPoints = new ArrayList<Node>();
-		//Randomly select root
-		//count(root) = 0;
-		//numSubTrees = 0;
-		
-//		for(each neighbour of root){
-//			if(count(neighbour) == infinity){
-//				iterArtPts(neighbour,1,root);
-//				numSubTrees++;
-//			}
-//			if(numSubTrees > 1) then add root into APs;
-//		}
-		return null;
+	public void getArticulationPoints(Node root) { //240 Small && 10853 Large
+		root.count = 0;
+		root.reachBack = 0;
+		root.parent = null;
+		int numSubTrees = 0;
+		for(Node n: root.getNeighbours()){
+			if(n.count == Integer.MAX_VALUE){
+				iterArtPts(n,1,root);
+				numSubTrees++;
+			}
+		}
+		if(numSubTrees > 1) {
+			APs.add(root);
+		}
 	}
 	
-	public void iterArtPts(Node node, int count, Node parent) {
-//		Stack<apNode> stack = new Stack<apNode>();
-//		while(!stack.isEmpty()) {
-//			apNode temp = stack.peek();
-//			if()
-//		}
-	}
-	
-	private class apNode{
-		
+	public void iterArtPts(Node firstNode, int count, Node parent) {
+		Stack<Node> stack = new Stack<Node>();
+		firstNode.parent = parent;
+		stack.push(firstNode);
+		Node n;
+		while(!stack.isEmpty()) {
+			n = stack.peek();
+			if(n.count == Integer.MAX_VALUE){
+				n.count = n.parent.count+1;
+				n.reachBack = n.parent.count+1;
+				
+				for(Node temp: n.getNeighbours()) {
+					if(temp != parent) n.children.add(temp);
+				}
+			
+			}else if(!n.children.isEmpty()){
+				Node child = n.children.remove(0);
+				if(child.count < Integer.MAX_VALUE)
+					n.reachBack = Math.min(child.count, n.reachBack);
+				else {
+					child.parent = n;
+					stack.push(child);
+				}
+			}
+			else{
+				if(n != firstNode){
+					n.parent.reachBack = Math.min(n.reachBack, n.parent.reachBack);
+					if(n.reachBack >= n.parent.count) APs.add(n.parent);
+				}
+				stack.pop();
+			}
+		}
 	}
 	
 }

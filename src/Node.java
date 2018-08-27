@@ -1,4 +1,3 @@
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.util.*;
@@ -12,7 +11,12 @@ public class Node {
 	private int id;
 	private Location loc;
 	private Set<Segment> segments = new HashSet<Segment>();
-	//private List<Segment> outgoing = new ArrayList<Segment>();
+	
+	
+	int count = Integer.MAX_VALUE;
+	int reachBack = 0;
+	Node parent;
+	List<Node> children = new ArrayList<Node>();
 	
 	public Node(int id, double lat, double lon) {
 		this.id = id;
@@ -58,7 +62,7 @@ public class Node {
 	
 	public void draw(Graphics g, Location origin, double scale) {
 		Point p = loc.asPoint(origin, scale);
-		g.fillOval(p.x, p.y, 2, 2);
+		g.fillOval(p.x-1, p.y-1, 2, 2);
 	}
 	
 	public String toString() {

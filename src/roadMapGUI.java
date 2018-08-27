@@ -23,7 +23,6 @@ public class roadMapGUI extends GUI {
 	double scale = 1;
 	List<Road> selectRoad = new ArrayList<Road>();
 	List<Node> selectNodes = new ArrayList<Node>();
-	List<Node> aPoints = new ArrayList<Node>();
 	List<Segment> shortPath = new ArrayList<Segment>();
 	List<Polygon> polygons = new ArrayList<Polygon>();
 	
@@ -44,13 +43,17 @@ public class roadMapGUI extends GUI {
 		for(Segment s: graph.getSegs()) {
 			s.draw(g, origin, scale);
 		}
-		
-		g.setColor(Color.RED);
+		g.setColor(Color.GREEN);
+		for(Node n: graph.APs) {
+			n.draw(g, origin, scale);
+		}
+		g.setColor(Color.BLUE);
 		for(Road r : selectRoad) {
 			for(Segment s : r.getSegs()) {
 				s.draw(g, origin, scale);
 			}
 		}
+		g.setColor(Color.RED);
 		for(Node n : selectNodes){
 			n.draw(g, origin, scale);
 		}
@@ -62,7 +65,6 @@ public class roadMapGUI extends GUI {
 
 	@Override
 	protected void onClick(MouseEvent e) {
-		System.out.println("Click");
 		
 		if(selectNodes.size() == 2) {//Max two nodes can be selected
 			shortPath.clear();
@@ -84,17 +86,33 @@ public class roadMapGUI extends GUI {
 		selectNodes.add(selectNode);
 		getTextOutputArea().setText(selectNodes.get(selectNodes.size()-1).toString());
 		if(selectNodes.size() == 2) {
-			shortPath = graph.getShortestPath(selectNodes.get(0), selectNodes.get(1));
-			double length = 0;
-			Set<Road> roads = new HashSet<Road>();
-			for(Segment s : shortPath) {
-				length += s.getLength();
-				roads.add(s.getRoad());
+			String message = "";
+			for(Node n : selectNodes) {
+				message += n.toString() + "\n\n";
 			}
-			getTextOutputArea().setText("Length: " + length + "km\nRoads: " + roads.toString());
+			shortPath = graph.getShortestPath(selectNodes.get(0), selectNodes.get(1));
+			
+			double lenTot = 0;
+			double lenRoad = 0;
+			List<Road> roads = new ArrayList<Road>();
+			int i = 0;
+			
+			while(i < shortPath.size()) {
+				Segment s = shortPath.get(i);
+				Road road = s.getRoad();
+				roads.add(road);
+				while(s.getRoad().getLabel().equals(road.getLabel()) && i < shortPath.size()) {
+					lenRoad += s.getLength();
+					lenTot += s.getLength();
+					i++;
+					if(i < shortPath.size())s = shortPath.get(i);
+				}
+				message += road.getLabel() + ": " + String.format("%.3f", lenRoad) + "km\n";
+				lenRoad = 0;
+			}
+			message += "Total Distance: " + String.format("%.3f",lenTot);
+			getTextOutputArea().setText(message);
 		}
-		// Print it's data
-		//
 	}
 
 	@Override
@@ -160,7 +178,6 @@ public class roadMapGUI extends GUI {
 		graph = new Graph(nodes, segments, roads);
 		origin = graph.getOrigin();
 		scale = ( getDrawingAreaDimension().getWidth() / graph.getGraphWidth());
-		
 		this.polygons = new ArrayList<Polygon>();
 		// Load polygons
 		if(polygons != null)
@@ -216,7 +233,6 @@ public class roadMapGUI extends GUI {
 				
 			}
 			bPoly.close();
-			aPoints = graph.getArticulationPoints();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
